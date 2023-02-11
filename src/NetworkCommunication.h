@@ -200,7 +200,7 @@ void handlePostRequest(WiFiClient client) {
   Serial.println("Received device: " + device);
   Serial.println("Received status: " + status);
   // Perform actions based on the received device and status values
-  relays[device.toInt()].status = status.toInt();
+  relays[device.toInt()].setStatus(status.toInt());
 
   String response = "HTTP/1.1 200 OK\r\n";
   response += "Content-Type: application/json\r\n";

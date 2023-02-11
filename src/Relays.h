@@ -21,6 +21,12 @@ struct Relay {
       pinMode(PIN, OUTPUT);
       OFF();
     }
+
+    void setStatus(int statusIn){
+      status = statusIn;
+      if(status == 0) OFF();
+      else if(status == 1)ON();
+    }
     void ON(){
         digitalWrite(PIN, LOW);
         status = 1;
