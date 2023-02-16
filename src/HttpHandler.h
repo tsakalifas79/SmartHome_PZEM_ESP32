@@ -61,8 +61,8 @@ void updatePOST(){
         if (!error) {
             device = doc["device"].as<string>();
             status = doc["status"].as<string>();
-            Serial.println("handlePostRequest::Received device: " + *device.c_str());
-            Serial.println("handlePostRequest::Received status: " + *status.c_str());
+            Serial.printf("handlePostRequest::Received device: %s\n", device.c_str());
+            Serial.printf("handlePostRequest::Received status: %s\n", status.c_str());
             relays[stoi(device)].setStatus(stoi(status));
         }
         else{
@@ -83,11 +83,11 @@ static void handlePostRequest(AsyncClient* client, string data) {
     response += "Content-Type: application/json\r\n";
     response += "Access-Control-Allow-Origin: *\r\n";
     response += "Access-Control-Allow-Headers: *\r\n";
-    response += "{\"device\": \"" + device + "\",\"status\": \"" + status + "\"}";
     response += "\r\n";
+    response += "{\"device\": \"" + device + "\",\"status\": \"" +  to_string(relays[stoi(device)].status) + "\"}";
     client->add(response.c_str(),response.length());
     client->send();
-    Serial.println("\nhandlePostRequest::Response: " + *response.c_str());
+    Serial.printf("handlePostRequest::Response: %s\n", response.c_str());
 }
 
 void handleGetRequest(AsyncClient* client, string data) {
@@ -110,14 +110,20 @@ void handleGetRequest(AsyncClient* client, string data) {
     response += "Content-Type: application/json\r\n";
     response += "Access-Control-Allow-Origin: *\r\n";
     response += "Access-Control-Allow-Headers: *\r\n";
-    response += "{\"device\": \"" + device + "\",\"status\": \"" + status + "\"}";
     response += "\r\n";
+    response += "{\"devices\": [";
+    response += "{\"device\": " + to_string(0) + ",\"status\": " + to_string(relays[0].status) + "},";
+    response += "{\"device\": " + to_string(1) + ",\"status\": " + to_string(relays[1].status) + "},";
+    response += "{\"device\": " + to_string(2) + ",\"status\": " + to_string(relays[2].status) + "},";
+    response += "{\"device\": " + to_string(3) + ",\"status\": " + to_string(relays[3].status) + "}";
+    response += "]}";
 
 
-    Serial.println("\nhandlePostRequest::Response: " + *response.c_str());   
+
     // client.println(response);
     client->add(response.c_str(),response.length());
     client->send();
+    Serial.printf("\nhandleGetRequest::Response: %s\n", response.c_str());   
 
     // client->flush();
 }
@@ -138,6 +144,7 @@ static void handleData(void* arg, AsyncClient* client, void *data, size_t len) {
     httpBuffer.append((const char*)data, len);
     // check if we have received the complete HTTP message
     if (httpBuffer.find("\r\n\r\n") != std::string::npos) {
+        Serial.printf("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~New Request~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         Serial.printf("\nip: %s: data: \n%s", client->remoteIP().toString().c_str(),httpBuffer.c_str());
         if (httpBuffer.find("POST") != std::string::npos) {
             handlePostRequest(client, httpBuffer);
@@ -146,6 +153,7 @@ static void handleData(void* arg, AsyncClient* client, void *data, size_t len) {
         }
         // httpBuffer = "";
         httpBuffer.clear();
+        client->close();
     }
 }
 
