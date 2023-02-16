@@ -40,11 +40,19 @@ void setup() {
   Serial.println("NODE MCU ESP 32 SMART HOME V5 READY");
 }
 
+void updateRelaysStatus(){
+  relays[0].updateStatus();
+  relays[1].updateStatus();
+  relays[2].updateStatus();
+  relays[3].updateStatus();
+}
+
 void loop() {  
   if(OTAEnable)ArduinoOTA.handle();
+	// DNS.processNextRequest();
   // updatePZEM();
   checkConnection();
+  updateRelaysStatus();
   // updateButton(button2);
   FSM();
-  updateHTTPServer();
 }

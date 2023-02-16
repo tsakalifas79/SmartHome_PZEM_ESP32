@@ -3,25 +3,18 @@
 
 // #include "WiFi.h"
 #include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
 #include <ArduinoOTA.h>
-#include "Relays.h"
-#include <ArduinoJson.h>
-#include <string>
+#include "HttpHandler.h"
+#include "config.h"
 
-const char ssid[] = "Sevah";
-const char pass[] = "firiolas";
+const char ssid[] = SSID;
+const char pass[] = PASSWORD;
 
 volatile long lastCheckConnection = 0;
 const int connectionDelay = 10000;
 
 bool OTAEnable = true;
 
-WiFiServer server(80);
-
-String device = "POYTSA";
-String status = "KAPIO STATUS";
 
 void WIFISetUp(void)
 {
@@ -99,145 +92,6 @@ void checkConnection(){
         // ESP.restart();
         WIFISetUp();
     }
-}
-
-std::vector<String> split(String data, char separator) {
-  int startIndex = 0;
-  int endIndex = 0;
-  std::vector<String> parts;
-
-  while (endIndex >= 0) {
-    endIndex = data.indexOf(separator, startIndex);
-    if (endIndex >= 0) {
-      String part = data.substring(startIndex, endIndex);
-      parts.push_back(part);
-      startIndex = endIndex + 1;
-    }
-  }
-
-  String part = data.substring(startIndex);
-  parts.push_back(part);
-
-  return parts;
-}
-
-void setupHTTPServer() {
-  server.begin();
-  Serial.println("Server started");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-}
-
-void handleGetRequest(WiFiClient client) {
-    String incomingData = "";
-    while (client.available()) {
-    incomingData += (char) client.read();
-    }
-
-    int pos = incomingData.indexOf("?");
-    if (pos != -1) {
-        String queryString = incomingData.substring(pos + 1);
-        int devicePos = queryString.indexOf("device:");
-        int statusPos = queryString.indexOf("status:");
-        if (devicePos != -1 && statusPos != -1) {
-            device = queryString.substring(devicePos + 7, statusPos - 1);
-            // status = queryString.substring(statusPos + 7);
-            // setupMode = status.toInt();
-        }
-    }
-
-    String response = "HTTP/1.1 200 OK\r\n";
-    response += "Content-Type: application/json\r\n";
-    response += "\r\n";
-    response += "{\"device\": " + device + ",\"status\": " + String(status) + "}";
-    client.println(response);
-
-    client.flush();
-}
-
-
-void handlePostRequest(WiFiClient client) {
-  String incomingData = "";
-  while (client.available()) {
-    incomingData += (char) client.read();
-  }
-
-  // Serial.println("Received data: " + incomingData);
-
-  // Split the incoming data by "\n"
-  std::vector<String> lines = split(incomingData, '\n');
-
-  // Parse the Content-Length header
-  uint contentLength = 0;
-  for (String line : lines) {
-    // Serial.println("line: " + line);
-    if (line.startsWith("Content-Length:")) {
-      contentLength = line.substring(16).toInt();
-      Serial.println("contentLength:" + line.substring(16));
-    }
-  }
-
-  // Read the content as a string
-  String content = incomingData.substring(incomingData.length() - contentLength);
-  // while (content.length() < contentLength && client.available()) {
-  //   content += (char) client.read();
-  // }
-
-  // Serial.println("Received content: " + content);
-
-  // Parse the JSON content
-  DynamicJsonDocument doc(1024);
-  DeserializationError error = deserializeJson(doc, content);
-
-  if (error) {
-    Serial.println("Failed to parse JSON");
-    return;
-  }
-
-  device = doc["device"].as<String>();
-  status = doc["status"].as<String>();
-
-  Serial.println("Received device: " + device);
-  Serial.println("Received status: " + status);
-  // Perform actions based on the received device and status values
-  relays[device.toInt()].setStatus(status.toInt());
-
-  String response = "HTTP/1.1 200 OK\r\n";
-  response += "Content-Type: application/json\r\n";
-  response += "\r\n";
-  // response += "{\"device\": " + device + ", \"status\": " + status + "}";
-  response += "{\"device\": \"" + device + "\", \"status\": \"" + status + "\"}";
-  client.write(response.c_str());
-
-  Serial.println("Response: " + response + "\n\n");
-
-  client.flush();
-}
-
-
-void updateHTTPServer() {
-  WiFiClient client = server.available();
-  if (!client) {
-    return;
-  }
-
-  Serial.println("New client connected");
-  while (client.connected()) {
-    if (client.available()) {
-      String request = client.readStringUntil('\r');
-      // Serial.println("Request: " + request);
-      client.flush();
-
-      if (request.startsWith("GET /")) {
-        handleGetRequest(client);
-      } else if (request.startsWith("POST /")) {
-        handlePostRequest(client);
-      }
-    }
-  }
-
-  client.stop();
-  Serial.println("Client disconnected\n\n");
 }
 
 #endif

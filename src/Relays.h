@@ -24,6 +24,9 @@ struct Relay {
 
     void setStatus(int statusIn){
       status = statusIn;
+    }
+
+    void updateStatus(){
       if(status == 0) OFF();
       else if(status == 1)ON();
     }
