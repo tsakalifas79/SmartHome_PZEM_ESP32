@@ -16,10 +16,10 @@ MiaouMsg::MiaouMsg(const String &dat) {
     fromJson(msg);
 }
 
-MiaouMsg::MiaouMsg(const DevID &srcIn, const DevID &dstIn, const String &dataIn, const MsgIdFlag &msgIdIn) {
+MiaouMsg::MiaouMsg(const DevID &srcIn, const DevID &dstIn, const DynamicJsonDocument &dataIn, const MsgIdFlag &msgIdIn) {
     src = std::move(srcIn);
     dst = std::move(dstIn);
-    data = std::move(dataIn);
+    setData(dataIn);
     msgID = msgIdIn;
 }
 
@@ -37,22 +37,31 @@ void MiaouMsg::setDst(const DevID &mdev)
     dst.mac = mdev.mac;
 }
 
+
+
+void MiaouMsg::setData(DynamicJsonDocument docIn)
+{
+    if(data != nullptr)delete data;
+    data = new DynamicJsonDocument(docIn);
+}
+
 void MiaouMsg::fromJson(DynamicJsonDocument &dataIn) {
     DynamicJsonDocument all = dataIn;
 
-    DynamicJsonDocument s = all["SRC"];
+    JsonObject s = all["SRC"];
     src.type = s["TYPE"].as<String>();
     src.name = s["NAME"].as<String>();
     src.mac  = s["MAC"].as<String>();
 
-    DynamicJsonDocument d = all["DST"];
+    JsonObject d = all["DST"];
     dst.type = d["TYPE"].as<String>();
     dst.name = d["NAME"].as<String>();
     dst.mac  = d["MAC"].as<String>();
 
     msgID = all["MSGID"].as<long>();
 
-    data = all["DATA"].as<String>();
+    // data = all["DATA"].as<String>();
+    deserializeJson((*data), all["DATA"].as<String>());
 }
 
 DynamicJsonDocument MiaouMsg::toJson() const {
@@ -81,7 +90,7 @@ DynamicJsonDocument MiaouMsg::toJson() const {
     all["SRC"] = srcS;
     all["DST"] = dstS;
     all["MSGID"] = String(msgID);
-    all["DATA"] = data;
+    all["DATA"] = (*data);
 
     return all;
 }
@@ -104,13 +113,13 @@ String MiaouMsg::toString() const {
     // String dataS;
     // serializeJson(data,dataS);
 
-    String srcS = s.as<String>();
-    String dstS = d.as<String>();
+    // String srcS = s.as<String>();
+    // String dstS = d.as<String>();
 
-    all["SRC"] = srcS;
-    all["DST"] = dstS;
+    all["SRC"] = s;
+    all["DST"] = d;
     all["MSGID"] = String(msgID);
-    all["DATA"] = data;
+    all["DATA"] = (*data);
 
 
 

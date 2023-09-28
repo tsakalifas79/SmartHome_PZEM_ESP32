@@ -18,12 +18,14 @@ class MiaouMsg
 {
 public:
     MiaouMsg();
-    MiaouMsg(const DevID &srcIn, const DevID &dstIn, const String &dataIn, const MsgIdFlag &msgIdIn = MsgIdFlag::DEF);
+    MiaouMsg(const DevID &srcIn, const DevID &dstIn, const DynamicJsonDocument &dataIn, const MsgIdFlag &msgIdIn = MsgIdFlag::DEF);
     MiaouMsg(const String &dat);
 
     DevID src, dst;
     size_t msgID = MsgIdFlag::DEF;
-    String data;
+    DynamicJsonDocument *data = nullptr;
+
+    void setData(DynamicJsonDocument docIn);
 
     void fromJson(DynamicJsonDocument &dataIn);
 

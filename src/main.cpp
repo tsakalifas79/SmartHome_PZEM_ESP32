@@ -44,14 +44,16 @@ void testNet(){
 
 
     DynamicJsonDocument doc(2048);
-    String out;
+    // String out;
 
-    doc["kalts"] = true;
-    doc["pote"] = "xthes";
+    doc["ESP"] = true;
+    doc["ESP01"] = "xthes";
 
-    serializeJson(doc, out);
-    doc.clear();
-    msg.data = out;
+    // serializeJson(doc, out);
+    // msg.data = out;
+    // msg.data = doc.as<String>();
+    // doc.clear();
+    msg.setData(doc);
 
     udp1->give(msg);
 
